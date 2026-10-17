@@ -5,80 +5,89 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Zava Mapping — Gerador de Missões DJI</title>
     
-    <!-- FONTE URBANIST (Google Fonts) -->
+    <!-- FONTE URBANIST (Todos os pesos, incluindo Thin para o topo) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder@2.4.0/dist/Control.Geocoder.css" />
     
     <style>
+        /* PALETA DE CORES EXTRAÍDA DO BRANDBOOK ZAVA */
         :root {
-            --bg-dark: #0b0b0b;
-            --bg-panel: #141414;
-            --bg-card: #1f1f1f;
-            --text-main: #ffffff;
-            --text-muted: #a3a3a3;
-            --accent-gold: #c5a059; /* Cor baseada na sua logo */
-            --accent-gold-hover: #d4af37;
+            --bg-dark: #1a1d29;       /* Fundo Geral (Navy) */
+            --bg-panel: #242735;      /* Painéis flutuantes */
+            --bg-card: #2d3142;       /* Cartões e inputs */
+            --text-main: #e6e6e6;     /* Texto claro */
+            --text-muted: #b1b2b5;    /* Texto secundário */
+            --accent-gold: #d2c2ac;   /* Dourado Zava */
+            --accent-gold-hover: #e5d7c5;
             --accent-green: #22c55e;
             --accent-red: #ef4444;
             --accent-yellow: #eab308;
-            --border-color: #2c2c2c;
+            --border-color: #3d3f4a;  /* Cinza do brandbook */
         }
         
-        /* TIPOGRAFIA URBANIST APLICADA */
-        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Urbanist', -apple-system, BlinkMacSystemFont, sans-serif; background-color: var(--bg-dark); color: var(--text-main); overflow: hidden; display: flex; flex-direction: column; }
+        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Urbanist', sans-serif; background-color: var(--bg-dark); color: var(--text-main); overflow: hidden; display: flex; flex-direction: column; }
         
-        header { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; background-color: var(--bg-panel); border-bottom: 1px solid var(--border-color); z-index: 1001; }
+        header { display: flex; justify-content: space-between; align-items: center; padding: 12px 24px; background-color: var(--bg-panel); border-bottom: 1px solid var(--border-color); z-index: 1001; }
         
-        /* ESTILO DA LOGO E MARCA */
-        .logo { display: flex; align-items: center; gap: 12px; }
-        .logo img { height: 32px; object-fit: contain; }
-        .logo span { font-size: 22px; font-weight: 800; color: var(--accent-gold); letter-spacing: 1.5px; }
+        /* ESTILO DO TOPO: LOGO IMAGEM + MAPPING THIN */
+        .logo-area { display: flex; align-items: center; gap: 12px; }
+        .logo-area img { height: 36px; object-fit: contain; }
+        .logo-mapping { 
+            font-family: 'Urbanist', sans-serif; 
+            font-weight: 300; /* Thin */
+            font-size: 24px; 
+            color: var(--accent-gold); 
+            letter-spacing: 2px; 
+            text-transform: uppercase;
+            margin-top: 2px;
+        }
 
         .header-actions { display: flex; align-items: center; gap: 15px; }
-        .btn-help { background: transparent; color: var(--accent-gold); border: 1px solid var(--accent-gold); padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; font-family: 'Urbanist', sans-serif; transition: 0.2s; display: flex; align-items: center; gap: 6px; }
-        .btn-help:hover { background: rgba(197,160,89,0.15); }
+        .btn-help { background: transparent; color: var(--accent-gold); border: 1px solid var(--accent-gold); padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; font-family: 'Urbanist', sans-serif; transition: 0.2s; display: flex; align-items: center; gap: 6px; font-size: 14px; }
+        .btn-help:hover { background: rgba(210,194,172,0.1); }
         
         .drone-controls { display: flex; align-items: center; gap: 10px; }
-        select.camera-select { background-color: var(--bg-card); color: white; border: 1px solid var(--accent-gold); padding: 8px 12px; border-radius: 6px; outline: none; cursor: pointer; font-weight: 600; font-family: 'Urbanist', sans-serif; }
-        #btn-custom-drone { display: none; background: var(--bg-card); border: 1px solid var(--accent-gold); border-radius: 6px; color: var(--accent-gold); padding: 8px 12px; cursor: pointer; font-size: 12px; font-weight: 600; font-family: 'Urbanist', sans-serif; }
+        select.camera-select { background-color: var(--bg-card); color: var(--text-main); border: 1px solid var(--border-color); padding: 8px 12px; border-radius: 6px; outline: none; cursor: pointer; font-weight: 600; font-family: 'Urbanist', sans-serif; transition: border 0.2s; }
+        select.camera-select:focus { border-color: var(--accent-gold); }
+        #btn-custom-drone { display: none; background: var(--bg-card); border: 1px solid var(--accent-gold); border-radius: 6px; color: var(--accent-gold); padding: 8px 12px; cursor: pointer; font-size: 13px; font-weight: 600; font-family: 'Urbanist', sans-serif; }
         
-        .container { display: flex; flex-grow: 1; height: calc(100% - 60px); position: relative; }
+        .container { display: flex; flex-grow: 1; height: calc(100% - 62px); position: relative; }
         #map { flex-grow: 1; height: 100%; z-index: 1; }
         
-        .dashboard { position: absolute; left: 10px; top: 10px; bottom: 10px; width: 340px; z-index: 1000; display: flex; flex-direction: column; gap: 10px; pointer-events: none; overflow-y: auto; padding-right: 5px; }
+        .dashboard { position: absolute; left: 12px; top: 12px; bottom: 12px; width: 340px; z-index: 1000; display: flex; flex-direction: column; gap: 12px; pointer-events: none; overflow-y: auto; padding-right: 6px; }
         .dashboard > * { pointer-events: auto; }
         .dashboard::-webkit-scrollbar { width: 6px; }
         .dashboard::-webkit-scrollbar-thumb { background: var(--accent-gold); border-radius: 4px; }
         
-        .panel { background-color: rgba(20, 20, 20, 0.96); border-radius: 12px; padding: 15px; box-shadow: 0 8px 32px rgba(0,0,0,0.6); backdrop-filter: blur(10px); border: 1px solid rgba(197, 160, 89, 0.2); }
-        .controls-header { font-size: 12px; color: var(--accent-gold); text-transform: uppercase; letter-spacing: 1px; margin: 0 0 12px 0; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; font-weight: 800; }
+        .panel { background-color: rgba(36, 39, 53, 0.96); border-radius: 12px; padding: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.6); backdrop-filter: blur(10px); border: 1px solid var(--border-color); }
+        .controls-header { font-size: 11px; color: var(--accent-gold); text-transform: uppercase; letter-spacing: 1.5px; margin: 0 0 14px 0; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; font-weight: 700; }
         
         .data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 10px; }
-        .data-item { display: flex; flex-direction: column; background: var(--bg-card); padding: 8px; border-radius: 8px; border: 1px solid var(--border-color); }
-        .data-item span:first-child { font-size: 11px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; font-weight: 600; }
+        .data-item { display: flex; flex-direction: column; background: var(--bg-card); padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); }
+        .data-item span:first-child { font-size: 10px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; font-weight: 600; letter-spacing: 0.5px; }
         .data-item span:last-child { font-size: 16px; font-weight: 700; color: #fff; }
         .data-item.full-width { grid-column: span 2; }
         
-        .control-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; margin-top: 10px; }
-        .control-row label { font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 5px; }
-        .help-icon { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; border-radius: 50%; background: var(--border-color); color: var(--text-muted); font-size: 10px; cursor: help; position: relative; }
-        .help-icon:hover { background: var(--accent-gold); color: #000; }
-        .help-icon:hover::after { content: attr(data-tip); position: absolute; bottom: 150%; left: 50%; transform: translateX(-50%); background: var(--bg-panel); border: 1px solid var(--accent-gold); color: white; padding: 6px 10px; border-radius: 6px; font-size: 12px; white-space: normal; width: 200px; z-index: 9999; box-shadow: 0 4px 12px rgba(0,0,0,0.5); line-height: 1.4; font-weight: normal; text-align: left; pointer-events: none; }
-        .control-row span { font-size: 14px; color: var(--accent-gold); font-weight: 700; }
+        .control-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; margin-top: 12px; }
+        .control-row label { font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 6px; color: var(--text-main); }
+        .help-icon { display: inline-flex; align-items: center; justify-content: center; width: 15px; height: 15px; border-radius: 50%; background: var(--border-color); color: var(--text-muted); font-size: 10px; cursor: help; position: relative; }
+        .help-icon:hover { background: var(--accent-gold); color: var(--bg-dark); }
+        .help-icon:hover::after { content: attr(data-tip); position: absolute; bottom: 150%; left: 50%; transform: translateX(-50%); background: var(--bg-panel); border: 1px solid var(--accent-gold); color: white; padding: 8px 12px; border-radius: 6px; font-size: 12px; white-space: normal; width: 220px; z-index: 9999; box-shadow: 0 4px 12px rgba(0,0,0,0.5); line-height: 1.4; font-weight: normal; text-align: left; pointer-events: none; }
+        .control-row span { font-size: 13px; color: var(--accent-gold); font-weight: 700; }
         
-        .slider-container { display: flex; align-items: center; gap: 10px; margin-bottom: 5px; }
-        .slider-btn { width: 28px; height: 28px; background-color: var(--bg-card); border: 1px solid var(--accent-gold); border-radius: 6px; color: white; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; }
-        .slider-btn:hover { background-color: var(--accent-gold); color: #000; }
-        input[type="range"] { flex-grow: 1; appearance: none; height: 4px; background: #2c2c2c; border-radius: 2px; outline: none; }
+        .slider-container { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+        .slider-btn { width: 28px; height: 28px; background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-main); cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+        .slider-btn:hover { background-color: var(--accent-gold); color: var(--bg-dark); border-color: var(--accent-gold); }
+        input[type="range"] { flex-grow: 1; appearance: none; height: 4px; background: var(--border-color); border-radius: 2px; outline: none; }
         input[type="range"]::-webkit-slider-thumb { appearance: none; width: 14px; height: 14px; background: var(--accent-gold); border-radius: 50%; cursor: pointer; }
         
         #advisor-panel { display: flex; flex-direction: column; gap: 8px; }
-        .advice-card { padding: 10px; border-radius: 8px; font-size: 13px; display: flex; gap: 10px; align-items: flex-start; line-height: 1.4; border-left: 4px solid; }
+        .advice-card { padding: 12px; border-radius: 8px; font-size: 12px; display: flex; gap: 10px; align-items: flex-start; line-height: 1.5; border-left: 4px solid; }
         .advice-success { background-color: rgba(34, 197, 94, 0.1); border-left-color: var(--accent-green); color: #bbf7d0; }
         .advice-warning { background-color: rgba(234, 179, 8, 0.1); border-left-color: var(--accent-yellow); color: #fef08a; }
         .advice-danger { background-color: rgba(239, 68, 68, 0.1); border-left-color: var(--accent-red); color: #fecaca; }
@@ -88,82 +97,81 @@
         .slider-switch { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--border-color); transition: .3s; border-radius: 20px; }
         .slider-switch:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
         input:checked + .slider-switch { background-color: var(--accent-gold); }
-        input:checked + .slider-switch:before { transform: translateX(16px); background: #000; }
+        input:checked + .slider-switch:before { transform: translateX(16px); background: var(--bg-dark); }
 
-        .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; transition: 0.2s; font-size: 14px; margin-bottom: 8px; font-family: 'Urbanist', sans-serif; }
-        .btn-gold { background-color: var(--accent-gold); color: #0b0b0b; }
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; transition: 0.2s; font-size: 14px; margin-bottom: 8px; font-family: 'Urbanist', sans-serif; letter-spacing: 0.5px;}
+        .btn-gold { background-color: var(--accent-gold); color: var(--bg-dark); }
         .btn-gold:hover { background-color: var(--accent-gold-hover); }
-        .btn-transparent { background-color: var(--bg-card); color: white; border: 1px solid var(--accent-gold); }
-        .btn-transparent:hover { background-color: rgba(197, 160, 89, 0.1); }
+        .btn-transparent { background-color: var(--bg-card); color: var(--text-main); border: 1px solid var(--border-color); }
+        .btn-transparent:hover { background-color: var(--border-color); border-color: var(--accent-gold); }
         .btn-row { display: flex; gap: 8px; }
         .file-input-wrapper { position: relative; flex: 1; }
         .file-input-wrapper input[type="file"] { position: absolute; left: 0; top: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
 
-        .grid-btn { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px 6px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 5px; transition: all .15s; color: var(--text-muted); user-select: none; }
+        .grid-btn { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px 6px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px; transition: all .15s; color: var(--text-muted); user-select: none; }
         .grid-btn:hover { border-color: var(--accent-gold); color: var(--text-main); }
-        .grid-btn.on { background: rgba(197,160,89,0.15); border-color: var(--accent-gold); color: var(--accent-gold); }
+        .grid-btn.on { background: rgba(210,194,172,0.1); border-color: var(--accent-gold); color: var(--accent-gold); }
         .grid-btn span { font-size: 12px; font-weight: 600; }
 
         .leaflet-control-geocoder{background:var(--bg-card)!important;border:1px solid var(--border-color)!important;border-radius:6px!important;box-shadow:0 4px 16px rgba(0,0,0,.5)!important}
-        .leaflet-control-geocoder-icon{background-color:var(--bg-card)!important;background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23c5a059"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>')!important;background-repeat:no-repeat!important;background-position:center!important;background-size:16px 16px!important;width:30px!important;height:30px!important;border-radius:6px!important;}
+        .leaflet-control-geocoder-icon{background-color:var(--bg-card)!important;background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23d2c2ac"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>')!important;background-repeat:no-repeat!important;background-position:center!important;background-size:16px 16px!important;width:30px!important;height:30px!important;border-radius:6px!important;}
         .leaflet-control-geocoder-icon:hover{background-color:var(--accent-gold)!important}
-        .leaflet-control-geocoder-form input{background:var(--bg-card)!important;color:#fff!important;border:1px solid var(--accent-gold)!important;border-radius:6px!important;padding:5px 8px!important;font-size:14px!important;outline:none!important;font-family: 'Urbanist', sans-serif;}
+        .leaflet-control-geocoder-form input{background:var(--bg-card)!important;color:#fff!important;border:1px solid var(--accent-gold)!important;border-radius:6px!important;padding:6px 10px!important;font-size:14px!important;outline:none!important;font-family: 'Urbanist', sans-serif;}
         .leaflet-control-geocoder-form input::placeholder{color:var(--text-muted)!important}
         .leaflet-control-geocoder-alternatives{background:var(--bg-card)!important;border:1px solid var(--accent-gold)!important;border-radius:6px!important;margin-top:4px!important;}
-        .leaflet-control-geocoder-alternatives li a{color:#fff!important;background:var(--bg-card)!important;padding:6px 10px!important;font-size:13px!important;}
-        .leaflet-control-geocoder-alternatives li a:hover{background:rgba(197,160,89,0.15)!important;color:var(--accent-gold)!important}
+        .leaflet-control-geocoder-alternatives li a{color:#fff!important;background:var(--bg-card)!important;padding:8px 12px!important;font-size:13px!important;}
+        .leaflet-control-geocoder-alternatives li a:hover{background:rgba(210,194,172,0.1)!important;color:var(--accent-gold)!important}
         .leaflet-control-geocoder-alternatives li:first-child a{border-top-left-radius:5px!important;border-top-right-radius:5px!important}
         .leaflet-control-geocoder-alternatives li:last-child a{border-bottom-left-radius:5px!important;border-bottom-right-radius:5px!important}
         @media (max-width:768px){.leaflet-control-geocoder-form input{width:170px!important}}
 
-        #coords-modal, #drone-modal, #help-modal { display: none; position: fixed; inset: 0; z-index: 3000; background: rgba(1,4,9,.75); align-items: center; justify-content: center; padding: 14px; backdrop-filter: blur(4px); }
-        .coords-card, .drone-card, .help-card { background: var(--bg-panel); border: 1px solid var(--accent-gold); border-radius: 12px; width: 100%; padding: 20px; box-shadow: 0 12px 48px rgba(0,0,0,.7); font-family: 'Urbanist', sans-serif; }
+        #coords-modal, #drone-modal, #help-modal { display: none; position: fixed; inset: 0; z-index: 3000; background: rgba(26,29,41,0.85); align-items: center; justify-content: center; padding: 14px; backdrop-filter: blur(4px); }
+        .coords-card, .drone-card, .help-card { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 12px; width: 100%; padding: 24px; box-shadow: 0 12px 48px rgba(0,0,0,.7); font-family: 'Urbanist', sans-serif; }
         .coords-card, .help-card { max-width: 650px; }
-        .drone-card { max-width: 380px; }
+        .drone-card { max-width: 400px; }
         
-        .coords-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 18px; font-weight: 800; color: var(--accent-gold); }
+        .coords-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 20px; font-weight: 700; color: var(--accent-gold); }
         .coords-header span:last-child { cursor: pointer; color: var(--text-muted); font-size: 24px; line-height: 1; padding: 2px 6px; transition: 0.2s; }
         .coords-header span:last-child:hover { color: var(--accent-red); }
-        .coords-info { font-size: 14px; color: var(--text-muted); margin-bottom: 15px; line-height: 1.5; }
-        .coords-info code { background: var(--bg-card); padding: 1px 5px; border-radius: 3px; color: var(--accent-gold); font-size: 13px; }
+        .coords-info { font-size: 14px; color: var(--text-muted); margin-bottom: 16px; line-height: 1.5; }
+        .coords-info code { background: var(--bg-card); padding: 2px 6px; border-radius: 4px; color: var(--accent-gold); font-size: 13px; }
         
-        #coords-input { width: 100%; min-height: 140px; background: var(--bg-card); color: #fff; border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; font-family: monospace; font-size: 13px; resize: vertical; outline: none; box-sizing: border-box; }
+        #coords-input { width: 100%; min-height: 160px; background: var(--bg-card); color: #fff; border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; font-family: monospace; font-size: 14px; resize: vertical; outline: none; box-sizing: border-box; }
         #coords-input:focus { border-color: var(--accent-gold); }
         .coords-error { color: var(--accent-red); font-size: 13px; margin-top: 8px; min-height: 16px; }
-        .coords-actions { display: flex; gap: 8px; margin-top: 12px; }
-        .coords-actions button { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--accent-gold); background: var(--bg-card); color: white; font-weight: 700; cursor: pointer; font-size: 14px; transition: 0.2s; font-family: 'Urbanist', sans-serif; }
-        .coords-actions button:hover { background: rgba(197,160,89,.15); }
-        .coords-actions .btn-gold { background: var(--accent-gold); color: #0b0b0b; border: none; }
+        .coords-actions { display: flex; gap: 10px; margin-top: 16px; }
+        .coords-actions button { flex: 1; padding: 12px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-card); color: white; font-weight: 700; cursor: pointer; font-size: 14px; transition: 0.2s; font-family: 'Urbanist', sans-serif; }
+        .coords-actions button:hover { background: var(--border-color); border-color: var(--accent-gold); }
+        .coords-actions .btn-gold { background: var(--accent-gold); color: var(--bg-dark); border: none; }
         .coords-actions .btn-gold:hover { background: var(--accent-gold-hover); }
 
-        .input-group { margin-bottom: 12px; display: flex; gap: 10px; }
+        .input-group { margin-bottom: 14px; display: flex; gap: 12px; }
         .input-group > div { flex: 1; }
-        .input-group label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
-        .input-group input { width: 100%; background: var(--bg-card); border: 1px solid var(--border-color); color: white; padding: 8px; border-radius: 6px; font-size: 14px; outline: none; box-sizing: border-box; font-family: 'Urbanist', sans-serif;}
+        .input-group label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px; font-weight: 600; }
+        .input-group input { width: 100%; background: var(--bg-card); border: 1px solid var(--border-color); color: white; padding: 10px; border-radius: 6px; font-size: 14px; outline: none; box-sizing: border-box; font-family: 'Urbanist', sans-serif;}
         .input-group input:focus { border-color: var(--accent-gold); }
 
         .help-content { max-height: 65vh; overflow-y: auto; padding-right: 10px; text-align: left; }
         .help-content::-webkit-scrollbar { width: 6px; }
         .help-content::-webkit-scrollbar-thumb { background: var(--accent-gold); border-radius: 4px; }
-        .help-content h3 { color: var(--accent-gold); font-size: 16px; margin: 15px 0 8px 0; border-bottom: 1px solid var(--border-color); padding-bottom: 4px; }
+        .help-content h3 { color: var(--accent-gold); font-size: 16px; margin: 18px 0 8px 0; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; }
         .help-content h3:first-child { margin-top: 0; }
-        .help-content p { font-size: 14px; color: #ddd; line-height: 1.6; margin-bottom: 10px; }
-        .help-content b { color: #fff; }
-        .help-content ul { padding-left: 20px; margin-bottom: 15px; }
-        .help-content li { font-size: 14px; color: #ddd; line-height: 1.6; margin-bottom: 6px; }
+        .help-content p { font-size: 14px; color: var(--text-main); line-height: 1.6; margin-bottom: 12px; }
+        .help-content b { color: var(--accent-gold); }
+        .help-content ul { padding-left: 20px; margin-bottom: 16px; }
+        .help-content li { font-size: 14px; color: var(--text-main); line-height: 1.6; margin-bottom: 8px; }
 
-        .route-lbl { background: rgba(20,20,20,0.95) !important; border: 1px solid var(--accent-gold) !important; color: #fff !important; font-size: 12px !important; font-family: 'Urbanist', sans-serif !important; font-weight: 700 !important; padding: 2px 6px !important; border-radius: 4px !important; box-shadow: 0 2px 6px rgba(0,0,0,0.5) !important; }
+        .route-lbl { background: rgba(26,29,41,0.95) !important; border: 1px solid var(--accent-gold) !important; color: #fff !important; font-size: 12px !important; font-family: 'Urbanist', sans-serif !important; font-weight: 700 !important; padding: 3px 8px !important; border-radius: 4px !important; box-shadow: 0 2px 6px rgba(0,0,0,0.5) !important; }
         .route-lbl::before { display: none !important; }
     </style>
 </head>
 <body>
 
     <header>
-        <!-- ÁREA DA LOGO -->
-        <div class="logo">
-            <!-- Certifique-se de que o arquivo da imagem se chama "logo.png" e está na mesma pasta -->
+        <!-- LOGO ZAVA + MAPPING THIN -->
+        <div class="logo-area">
             <img src="logo.png" alt="ZAVA" onerror="this.style.display='none'">
-            <span>ZAVA MAPPING</span>
+            <span class="logo-mapping">Mapping</span>
         </div>
         
         <div class="header-actions">
@@ -208,7 +216,7 @@
                         <span id="lbl-time">0m 0s</span>
                     </div>
                     <div class="data-item full-width" style="flex-direction: row; justify-content: space-between; align-items: center;">
-                        <span style="font-size:13px; color:white; display:flex; align-items:center; gap:5px;">
+                        <span style="font-size:13px; color:var(--text-main); display:flex; align-items:center; gap:6px;">
                             Parar p/ Fotografar (Hover)
                             <span class="help-icon" data-tip="Se ativado, o drone para em cada waypoint para tirar a foto, gerando nitidez perfeita mas gastando mais bateria. Se desativado, ele voa e fotografa ao mesmo tempo.">?</span>
                         </span>
@@ -455,8 +463,8 @@
             position: 'topright',
             edit: { featureGroup: drawnItems },
             draw: {
-                polygon: { allowIntersection: false, shapeOptions: { color: '#c5a059', fillOpacity: 0.2, weight: 2 } },
-                polyline: false, rectangle: { shapeOptions: { color: '#c5a059', fillOpacity: 0.2, weight: 2 } },
+                polygon: { allowIntersection: false, shapeOptions: { color: '#d2c2ac', fillOpacity: 0.15, weight: 2 } },
+                polyline: false, rectangle: { shapeOptions: { color: '#d2c2ac', fillOpacity: 0.15, weight: 2 } },
                 marker: false, circle: false, circlemarker: false
             }
         });
@@ -496,13 +504,13 @@
         map.on(L.Draw.Event.CREATED, function (e) {
             if(currentPolygonLayer) drawnItems.removeLayer(currentPolygonLayer);
             currentPolygonLayer = e.layer;
-            currentPolygonLayer.setStyle({ color: '#c5a059', fillOpacity: 0.2 });
+            currentPolygonLayer.setStyle({ color: '#d2c2ac', fillOpacity: 0.15 });
             drawnItems.addLayer(currentPolygonLayer);
             updateAll();
         });
 
         map.on(L.Draw.Event.EDITED, function () {
-            if (currentPolygonLayer) currentPolygonLayer.setStyle({ color: '#c5a059', fillOpacity: 0.2, weight: 2 });
+            if (currentPolygonLayer) currentPolygonLayer.setStyle({ color: '#d2c2ac', fillOpacity: 0.15, weight: 2 });
             updateAll();
         });
 
@@ -762,7 +770,7 @@
             }
             if (points.length < 3) { errEl.textContent = `Mínimo de 3 coordenadas.`; return; }
             if (currentPolygonLayer) drawnItems.removeLayer(currentPolygonLayer);
-            currentPolygonLayer = L.polygon(points, { color: '#c5a059', fillOpacity: 0.2 }).addTo(drawnItems);
+            currentPolygonLayer = L.polygon(points, { color: '#d2c2ac', fillOpacity: 0.15 }).addTo(drawnItems);
             map.fitBounds(currentPolygonLayer.getBounds()); closeCoordsModal(); updateAll();
         }
 
@@ -845,14 +853,14 @@
 
             if(waypoints.length > 0) {
                 allStrips.forEach(strip => {
-                    const poly = L.polyline(strip.map(wp => [wp.lat, wp.lng]), {color: '#c5a059', weight: 2, opacity: 0.8}).addTo(routeLayer);
-                    if (window.L.polylineDecorator) L.polylineDecorator(poly, { patterns: [{offset: '10px', repeat: '80px', symbol: L.Symbol.arrowHead({pixelSize: 12, polygon: false, pathOptions: {stroke: true, color: '#c5a059', weight: 2, opacity: 0.9}})}] }).addTo(routeLayer);
+                    const poly = L.polyline(strip.map(wp => [wp.lat, wp.lng]), {color: '#d2c2ac', weight: 2, opacity: 0.8}).addTo(routeLayer);
+                    if (window.L.polylineDecorator) L.polylineDecorator(poly, { patterns: [{offset: '10px', repeat: '80px', symbol: L.Symbol.arrowHead({pixelSize: 12, polygon: false, pathOptions: {stroke: true, color: '#d2c2ac', weight: 2, opacity: 0.9}})}] }).addTo(routeLayer);
                 });
                 for (let i = 0; i < allStrips.length - 1; i++) {
                     const end = allStrips[i].slice(-1)[0], start = allStrips[i+1][0];
-                    L.polyline([[end.lat, end.lng], [start.lat, start.lng]], {color: '#a3a3a3', weight: 1.5, dashArray: '4, 4', opacity: 0.7}).addTo(routeLayer);
+                    L.polyline([[end.lat, end.lng], [start.lat, start.lng]], {color: '#b1b2b5', weight: 1.5, dashArray: '4, 4', opacity: 0.7}).addTo(routeLayer);
                 }
-                waypoints.forEach((wp, i) => L.circleMarker([wp.lat, wp.lng], { radius: 2.5, fillColor: '#c5a059', color: '#000', weight: 0.5, fillOpacity: 0.8 }).addTo(routeLayer));
+                waypoints.forEach((wp, i) => L.circleMarker([wp.lat, wp.lng], { radius: 2.5, fillColor: '#d2c2ac', color: '#000', weight: 0.5, fillOpacity: 0.8 }).addTo(routeLayer));
 
                 L.circleMarker([waypoints[0].lat, waypoints[0].lng], {radius: 6, fillColor: '#22c55e', color: '#fff', weight: 2, fillOpacity: 1}).addTo(routeLayer).bindTooltip('INÍCIO', {permanent: true, direction: 'right', className: 'route-lbl', offset: [10, 0]});
                 const last = waypoints[waypoints.length - 1];
@@ -874,7 +882,7 @@
             if(ptsStr) {
                 const latLngs = ptsStr.split(/\s+/).map(p => p.split(',').map(Number)).filter(p => !isNaN(p[0])).map(p => [p[1], p[0]]);
                 if(currentPolygonLayer) drawnItems.removeLayer(currentPolygonLayer);
-                currentPolygonLayer = L.polygon(latLngs, { color: '#c5a059', fillOpacity: 0.2 }).addTo(drawnItems);
+                currentPolygonLayer = L.polygon(latLngs, { color: '#d2c2ac', fillOpacity: 0.15 }).addTo(drawnItems);
                 map.fitBounds(currentPolygonLayer.getBounds()); updateAll();
             }
             e.target.value = "";
