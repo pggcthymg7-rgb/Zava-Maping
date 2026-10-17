@@ -148,10 +148,10 @@
         .help-content h3:first-child { margin-top: 0; }
         .help-content p { font-size: 14px; color: var(--text-main); line-height: 1.6; margin-bottom: 12px; }
         .help-content b { color: var(--accent-gold); }
-        .help-content ul { padding-left: 20px; margin-bottom: 16px; }
+        .help-content ul { padding-left : 20px; margin-bottom: 16px; }
         .help-content li { font-size: 14px; color: var(--text-main); line-height: 1.6; margin-bottom: 8px; }
 
-        .route-lbl { background: rgba(26,29,41,0.95) !important; border: 1px solid var(--accent-gold) !important; color: #fff !important; font-size: 12px !important; font-family: 'Urbanist', sans-serif !important; font-weight: 700 !important; padding: 3px 8px !important; border-radius: 4px !important; box-shadow: 0 2px 6px rgba(0,0,0,0.5) !important; }
+        .route-lbl { background: rgba(26,29,41,0.95) !important; border: 1px solid var(--accent-gold) !important; color: #fff !important; font-size: 12px !important; font-family: 'Urbanist', sans-serif !important; font-weight: 700 !important; padding: 3px 8px !important; border-radius: 4px !important; box-shadow: 02px 6px rgba(0,0,0,0.5) !important; }
         .route-lbl::before { display: none !important; }
 
         /* =========================================
@@ -190,7 +190,7 @@
         }
 
         /* =========================================
-           RESPONSIVIDADE (MOBILE) 
+           RESPONSIVIDADE (MOBILE) - CORRIGIDA
            ========================================= */
         #btn-mobile-menu { display: none; background: transparent; border: none; color: var(--accent-gold); font-size: 28px; cursor: pointer; padding: 0 10px 0 0; outline: none; }
         #drawer-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 999; opacity: 0; transition: opacity 0.3s; backdrop-filter: blur(2px); }
@@ -204,12 +204,27 @@
             .btn-help span { display: none; }
             select.camera-select { padding: 6px 8px; font-size: 13px; max-width: 140px; }
             
+            /* CORREÇÃO DA GAVETA MOBILE: Usando position fixed para o Safari do iOS rolar sem bugar */
             .dashboard { 
-                left: -100%; width: 85vw; max-width: 340px;
-                background: var(--bg-dark); padding: 12px;
-                z-index: 1000; box-shadow: 4px 0 24px rgba(0,0,0,0.8);
+                position: fixed; 
+                top: 54px; /* Altura exata do header */
+                left: -100%; 
+                bottom: 0; 
+                width: 85vw; 
+                max-width: 340px;
+                background: var(--bg-dark); 
+                padding: 12px;
+                padding-bottom: 80px; /* Espaço extra para a barra inferior do iPhone não cobrir os botões */
+                z-index: 1000; 
+                box-shadow: 4px 0 24px rgba(0,0,0,0.8);
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch; /* MÁGICA: Ativa rolagem suave e natural no iOS */
+                pointer-events: auto; /* Garante que o toque funcione */
+                transition: left 0.3s ease;
             }
             .dashboard.open { left: 0; }
+            .dashboard > * { pointer-events: auto; } /* Reativa eventos nos filhos */
+            
             #drawer-backdrop.show { display: block; opacity: 1; }
             .container { height: calc(100% - 54px); }
             
@@ -355,7 +370,6 @@
                     </label>
                 </div>
                 <div id="terrain-status" style="font-size: 12px; color: var(--text-muted); margin-top: -5px; margin-bottom: 10px; display: none; line-height: 1.3;"></div>
-                <div id="terrain-status" style="font-size: 12px; color: var(--text-muted); margin-top: -5px; margin-bottom: 10px; display: none; line-height: 1.3;"></div>
 
                 <div class="control-row" style="margin-top: 15px; margin-bottom: 8px;"><label>Padrão de Grade</label></div>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:15px;">
@@ -440,7 +454,7 @@
 
                 <h3>5. Acompanhar Terreno (SRTM)</h3>
                 <p>Se você está mapeando um morro e o drone mantém uma altura fixa, no topo do morro ele vai raspar no chão.</p>
-                <p><b>Ativado:</b> O drone sobe e desce copiando o relevo do terreno, mantendo a mesma distância do chão.</p>
+                <p><b>Ativado:</b> O drone sobe e desce copiando o relevo=" do terreno, mantendo a mesma distância do chão.</p>
 
                 <h3>6. Velocidade do Voo e Borrão</h3>
                 <p>Se você voar mais rápido que a <b>"Vel. de Borrão"</b>, a foto tremerá e o software não conseguirá processar.</p>
@@ -467,7 +481,7 @@
             <textarea id="coords-input" placeholder="-23.5505, -46.6333&#10;-23.5505, -46.6300&#10;-23.5480, -46.6300"></textarea>
             <div id="coords-error" class="coords-error"></div>
             <div class="coords-actions">
-                <button onclick="closeCoordsModal()">Cancelar</button>
+                <button onclickcloseCoordsModal()">Cancelar</button>
                 <button class="btn-gold" onclick="createPolygonFromCoords()">Criar polígono</button>
             </div>
         </div>
@@ -588,7 +602,7 @@
         let isFetchingElevation = false;
         let elevationGenToken = 0;
         let isDrawing = false;
-        let elevData = []; // Armazena os dados do gráfico
+        let elevData = []; 
 
         map.on(L.Draw.Event.DRAWSTART, () => isDrawing = true);
         map.on(L.Draw.Event.DRAWSTOP, () => isDrawing = false);
@@ -735,14 +749,13 @@
                 if (toElev === null) throw new Error('Sem dados de elevação nesta área');
                 
                 let minE = toElev, maxE = toElev;
-                elevData = []; // Limpa dados antigos do gráfico
+                elevData = [];
                 const alt = parseFloat(document.getElementById('slider-alt').value);
 
                 waypoints.forEach(wp => {
                     const ev = elevTS(wp.lat, wp.lng, Z);
                     wp.ez = (ev === null ? 0 : ev - toElev);
                     
-                    // Alimenta o gráfico
                     const dist = turf.distance(turf.point([takeoffPoint.lng, takeoffPoint.lat]), turf.point([wp.lng, wp.lat]));
                     elevData.push({ dist: dist, terrain: wp.ez, drone: wp.ez + alt });
 
@@ -770,20 +783,16 @@
             }
         }
 
-        // =========================================
-        // DESENHO DO GRÁFICO DE ELEVAÇÃO
-        // =========================================
         function drawElevationProfile() {
             if(!elevData.length) return;
             
             document.getElementById('elev-profile-panel').classList.add('show');
             const mapElement = document.getElementById('map');
-            mapElement.style.height = 'calc(100% - 180px)'; // Encolhe o mapa
+            mapElement.style.height = 'calc(100% - 180px)'; 
 
             const canvas = document.getElementById('elev-canvas');
             const ctx = canvas.getContext('2d');
             
-            // Ajusta resolução para telas Retina/Mobile
             const dpr = window.devicePixelRatio || 1;
             const rect = canvas.parentElement.getBoundingClientRect();
             canvas.width = rect.width * dpr;
@@ -796,19 +805,16 @@
 
             ctx.clearRect(0, 0, w, h);
 
-            // Encontra os limites (min e max) para escalar o gráfico
             let minY = Infinity, maxY = -Infinity;
             elevData.forEach(d => {
                 minY = Math.min(minY, d.terrain);
                 maxY = Math.max(maxY, d.drone);
             });
-            const rangeY = (maxY - minY) || 10; // Evita divisão por zero
+            const rangeY = (maxY - minY) || 10;
             
-            // Funções de mapeamento (coordenada -> pixel)
             const getX = (dist) => padX + (dist / elevData[elevData.length-1].dist) * (w - padX*2);
             const getY = (val) => h - padY - ((val - minY) / rangeY) * (h - padY*2);
 
-            // Desenha Linhas de Grade
             ctx.strokeStyle = 'rgba(255,255,255,0.05)';
             ctx.lineWidth = 1;
             for(let i=0; i<=4; i++) {
@@ -816,31 +822,28 @@
                 ctx.beginPath(); ctx.moveTo(padX, y); ctx.lineTo(w-padX, y); ctx.stroke();
             }
 
-            // Desenha Área do Terreno (preenchimento)
             ctx.beginPath();
-            ctx.moveTo(getX(elevData[0].dist), getY(minY - 5)); // Fundo
+            ctx.moveTo(getX(elevData[0].dist), getY(minY - 5));
             elevData.forEach(d => ctx.lineTo(getX(d.dist), getY(d.terrain)));
             ctx.lineTo(getX(elevData[elevData.length-1].dist), getY(minY - 5));
-            ctx.fillStyle = 'rgba(210, 194, 172, 0.1)'; // Dourado transparente
+            ctx.fillStyle = 'rgba(210, 194, 172, 0.1)';
             ctx.fill();
 
-            // Desenha Linha do Terreno
             ctx.beginPath();
             elevData.forEach((d, i) => {
                 if(i===0) ctx.moveTo(getX(d.dist), getY(d.terrain));
                 else ctx.lineTo(getX(d.dist), getY(d.terrain));
             });
-            ctx.strokeStyle = '#22c55e'; // Verde (Terreno)
+            ctx.strokeStyle = '#22c55e';
             ctx.lineWidth = 2;
             ctx.stroke();
 
-            // Desenha Linha do Drone
             ctx.beginPath();
             elevData.forEach((d, i) => {
                 if(i===0) ctx.moveTo(getX(d.dist), getY(d.drone));
                 else ctx.lineTo(getX(d.dist), getY(d.drone));
             });
-            ctx.strokeStyle = '#d2c2ac'; // Dourado (Drone)
+            ctx.strokeStyle = '#d2c2ac';
             ctx.lineWidth = 2;
             ctx.stroke();
         }
@@ -850,9 +853,6 @@
             document.getElementById('map').style.height = '100%';
         }
 
-        // =========================================
-        // EXPORTAR TXT UTM
-        // =========================================
         function latLngToUTM(lat, lng) {
             const a = 6378137, f = 1/298.257223563;
             const e2 = f * (2 - f), k0 = 0.9996;
@@ -907,9 +907,6 @@
             document.body.appendChild(a); a.click(); document.body.removeChild(a);
         }
 
-        // =========================================
-        // OUTRAS FUNÇÕES
-        // =========================================
         function onDroneChange() {
             const val = document.getElementById('drone-selector').value;
             const btn = document.getElementById('btn-custom-drone');
@@ -1162,7 +1159,6 @@
             const pitch = -document.getElementById('slider-cam-angle').value;
             const hoverCapture = document.getElementById('chk-hover').checked;
             
-            // LÓGICA DE DIVISÃO AUTOMÁTICA (>195 WAYPOINTS)
             const MAX_WP = 195;
             const chunks = [];
             
@@ -1174,13 +1170,12 @@
                     let end = Math.min(i + MAX_WP, waypoints.length);
                     chunks.push(waypoints.slice(i, end));
                     if (end >= waypoints.length) break;
-                    i = end - 1; // Repete o último ponto no próximo voo para emendar
+                    i = end - 1;
                 }
             }
 
             const JSZipObj = new JSZip();
             
-            // Itera sobre os blocos (se for 1 só, gera o arquivo normal. Se for mais, gera múltiplos)
             for (let c = 0; c < chunks.length; c++) {
                 const chunk = chunks[c];
                 const suffix = chunks.length > 1 ? `_Voo${c+1}de${chunks.length}` : '';
@@ -1250,7 +1245,6 @@
             }
         }
 
-        // Inicialização
         window.addEventListener('resize', () => {
             if(document.getElementById('elev-profile-panel').classList.contains('show')) {
                 drawElevationProfile();
