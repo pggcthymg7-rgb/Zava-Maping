@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Zava Mapping — Gerador de Missões DJI</title>
     
-    <!-- FONTE URBANIST (Todos os pesos) -->
+    <!-- FONTE URBANIST -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -15,7 +15,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder@2.4.0/dist/Control.Geocoder.css" />
     
     <style>
-        /* PALETA DE CORES EXTRAÍDA DO BRANDBOOK ZAVA */
+        /* PALETA DE CORES ZAVA */
         :root {
             --bg-dark: #1a1d29;       
             --bg-panel: #242735;      
@@ -34,18 +34,9 @@
         
         header { display: flex; justify-content: space-between; align-items: center; padding: 12px 24px; background-color: var(--bg-panel); border-bottom: 1px solid var(--border-color); z-index: 1001; }
         
-        /* ESTILO DO TOPO: LOGO IMAGEM + MAPPING THIN */
         .logo-area { display: flex; align-items: center; gap: 12px; }
         .logo-area img { height: 36px; object-fit: contain; }
-        .logo-mapping { 
-            font-family: 'Urbanist', sans-serif; 
-            font-weight: 300; /* Thin */
-            font-size: 24px; 
-            color: var(--accent-gold); 
-            letter-spacing: 2px; 
-            text-transform: uppercase;
-            margin-top: 2px;
-        }
+        .logo-mapping { font-family: 'Urbanist', sans-serif; font-weight: 300; font-size: 24px; color: var(--accent-gold); letter-spacing: 2px; text-transform: uppercase; margin-top: 2px; }
 
         .header-actions { display: flex; align-items: center; gap: 15px; }
         .btn-help { background: transparent; color: var(--accent-gold); border: 1px solid var(--accent-gold); padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; font-family: 'Urbanist', sans-serif; transition: 0.2s; display: flex; align-items: center; gap: 6px; font-size: 14px; }
@@ -56,8 +47,8 @@
         select.camera-select:focus { border-color: var(--accent-gold); }
         #btn-custom-drone { display: none; background: var(--bg-card); border: 1px solid var(--accent-gold); border-radius: 6px; color: var(--accent-gold); padding: 8px 12px; cursor: pointer; font-size: 13px; font-weight: 600; font-family: 'Urbanist', sans-serif; }
         
-        .container { display: flex; flex-grow: 1; height: calc(100% - 62px); position: relative; }
-        #map { flex-grow: 1; height: 100%; z-index: 1; }
+        .container { display: flex; flex-grow: 1; height: calc(100% - 62px); position: relative; overflow: hidden; }
+        #map { flex-grow: 1; height: 100%; z-index: 1; transition: height 0.3s ease; }
         
         .dashboard { position: absolute; left: 12px; top: 12px; bottom: 12px; width: 340px; z-index: 1000; display: flex; flex-direction: column; gap: 12px; pointer-events: none; overflow-y: auto; padding-right: 6px; transition: left 0.3s ease; }
         .dashboard > * { pointer-events: auto; }
@@ -164,6 +155,41 @@
         .route-lbl::before { display: none !important; }
 
         /* =========================================
+           GRÁFICO DE ELEVAÇÃO
+           ========================================= */
+        #elev-profile-panel {
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 180px;
+            background: var(--bg-panel);
+            border-top: 1px solid var(--border-color);
+            z-index: 900;
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 -4px 24px rgba(0,0,0,0.5);
+        }
+        #elev-profile-panel.show { transform: translateY(0); }
+        .elev-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 8px 16px; font-size: 12px; color: var(--accent-gold);
+            font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .elev-header button {
+            background: transparent; border: none; color: var(--text-muted);
+            font-size: 20px; cursor: pointer; padding: 0 5px; transition: 0.2s;
+        }
+        .elev-header button:hover { color: var(--accent-red); }
+        #elev-canvas-wrap {
+            flex-grow: 1; position: relative; padding: 10px 16px;
+        }
+        #elev-canvas {
+            width: 100%; height: 100%; display: block; cursor: crosshair;
+        }
+
+        /* =========================================
            RESPONSIVIDADE (MOBILE) 
            ========================================= */
         #btn-mobile-menu { display: none; background: transparent; border: none; color: var(--accent-gold); font-size: 28px; cursor: pointer; padding: 0 10px 0 0; outline: none; }
@@ -175,36 +201,30 @@
             .logo-area img { height: 28px; }
             .logo-mapping { font-size: 18px; }
             .btn-help { padding: 8px; border: none; font-size: 18px; }
-            .btn-help span { display: none; } /* Esconde o texto e deixa só o ícone no mobile */
+            .btn-help span { display: none; }
             select.camera-select { padding: 6px 8px; font-size: 13px; max-width: 140px; }
             
-            /* A Gaveta Deslizante */
             .dashboard { 
-                left: -100%; /* Esconde para a esquerda */
-                width: 85vw; 
-                max-width: 340px;
-                background: var(--bg-dark);
-                padding: 12px;
-                z-index: 1000;
-                box-shadow: 4px 0 24px rgba(0,0,0,0.8);
+                left: -100%; width: 85vw; max-width: 340px;
+                background: var(--bg-dark); padding: 12px;
+                z-index: 1000; box-shadow: 4px 0 24px rgba(0,0,0,0.8);
             }
             .dashboard.open { left: 0; }
-            
             #drawer-backdrop.show { display: block; opacity: 1; }
-            .container { height: calc(100% - 54px); } /* Ajuste da altura do header mobile */
+            .container { height: calc(100% - 54px); }
             
-            /* Botões de toque maiores */
             .slider-btn { width: 34px; height: 34px; font-size: 20px; }
             input[type="range"]::-webkit-slider-thumb { width: 20px; height: 20px; }
             .switch { width: 44px; height: 24px; }
             .slider-switch:before { width: 18px; height: 18px; }
             input:checked + .slider-switch:before { transform: translateX(20px); }
             
-            /* Ajustes de Modais */
             .coords-card, .drone-card, .help-card { padding: 16px; }
             .help-content { max-height: 60vh; }
             .coords-actions button { padding: 14px; }
             .leaflet-control-geocoder-form input { width: 170px !important; }
+
+            #elev-profile-panel { height: 150px; }
         }
     </style>
 </head>
@@ -214,10 +234,7 @@
     <div id="drawer-backdrop" onclick="toggleMobileMenu()"></div>
 
     <header>
-        <!-- BOTÃO MENU MOBILE -->
         <button id="btn-mobile-menu" onclick="toggleMobileMenu()">☰</button>
-
-        <!-- LOGO ZAVA + MAPPING THIN -->
         <div class="logo-area">
             <img src="logo.png" alt="ZAVA" onerror="this.style.display='none'">
             <span class="logo-mapping">Mapping</span>
@@ -239,7 +256,7 @@
     </header>
 
     <div class="container">
-        <!-- DASHBOARD (VIRA GAVETA NO MOBILE) -->
+        <!-- DASHBOARD -->
         <div class="dashboard" id="dashboard-panel">
             <div class="panel">
                 <div class="controls-header">ANÁLISE E INTELIGÊNCIA</div>
@@ -338,6 +355,7 @@
                     </label>
                 </div>
                 <div id="terrain-status" style="font-size: 12px; color: var(--text-muted); margin-top: -5px; margin-bottom: 10px; display: none; line-height: 1.3;"></div>
+                <div id="terrain-status" style="font-size: 12px; color: var(--text-muted); margin-top: -5px; margin-bottom: 10px; display: none; line-height: 1.3;"></div>
 
                 <div class="control-row" style="margin-top: 15px; margin-bottom: 8px;"><label>Padrão de Grade</label></div>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:15px;">
@@ -363,22 +381,34 @@
                 </div>
 
                 <div style="margin-top: 5px;">
-                    <button class="btn btn-gold" onclick="exportDJIKMZ()">⬇ Exportar Missão WPML</button>
+                    <button class="btn btn-gold" onclick="exportDJIKMZ()">⬇ Exportar Missão DJI</button>
                     <div class="btn-row">
                         <div class="file-input-wrapper">
-                            <button class="btn btn-transparent" style="width:100%">🌍 Importar Área</button>
+                            <button class="btn btn-transparent" style="width:100%">🌍 Importar</button>
                             <input type="file" id="importKmz" accept=".kml,.kmz">
                         </div>
                         <button class="btn btn-transparent" style="flex:1;" onclick="clearMap()">🗑 Limpar</button>
                     </div>
                     <div class="btn-row" style="margin-top: 8px;">
-                        <button class="btn btn-transparent" style="flex:1;" onclick="openCoordsModal()">📍 Colar Coordenadas</button>
+                        <button class="btn btn-transparent" style="flex:1;" onclick="openCoordsModal()">📍 Colar Coord.</button>
+                        <button class="btn btn-transparent" style="flex:1;" onclick="exportUTM()">📄 TXT UTM</button>
                     </div>
                 </div>
             </div>
         </div>
 
         <div id="map"></div>
+
+        <!-- PAINEL DE GRÁFICO DE ELEVAÇÃO -->
+        <div id="elev-profile-panel">
+            <div class="elev-header">
+                <span>Perfil de Elevação do Terreno</span>
+                <button onclick="closeElevationPanel()">×</button>
+            </div>
+            <div id="elev-canvas-wrap">
+                <canvas id="elev-canvas"></canvas>
+            </div>
+        </div>
     </div>
 
     <!-- Modais -->
@@ -501,13 +531,11 @@
             backdrop.classList.toggle('show');
         }
 
-        // Fecha o menu mobile ao clicar em qualquer botão que gera ação no mapa
         document.getElementById('btn-mobile-menu').addEventListener('click', function(e) {
             e.stopPropagation();
         });
         
-        // Fechar menu ao clicar em um botão de exportar ou importar
-        ['btn-exp', 'btn-exp-ge', 'clearMap', 'btn-custom-drone'].forEach(id => {
+        ['clearMap', 'btn-custom-drone'].forEach(id => {
             const el = document.getElementById(id);
             if(el) el.addEventListener('click', () => {
                 if(window.innerWidth <= 768) toggleMobileMenu();
@@ -560,6 +588,7 @@
         let isFetchingElevation = false;
         let elevationGenToken = 0;
         let isDrawing = false;
+        let elevData = []; // Armazena os dados do gráfico
 
         map.on(L.Draw.Event.DRAWSTART, () => isDrawing = true);
         map.on(L.Draw.Event.DRAWSTOP, () => isDrawing = false);
@@ -587,6 +616,7 @@
             if (!drawnItems.getLayers().length) {
                 currentPolygonLayer = null; waypoints = []; routeLayer.clearLayers();
                 document.getElementById('lbl-photos').innerText = '0'; document.getElementById('lbl-time').innerText = '0m 0s';
+                closeElevationPanel();
             }
         });
 
@@ -610,6 +640,7 @@
                 if (takeoffMarker) { map.removeLayer(takeoffMarker); takeoffMarker = null; }
                 takeoffPoint = null;
                 waypoints.forEach(wp => wp.ez = 0);
+                closeElevationPanel();
             }
             updateAll();
         }
@@ -704,9 +735,17 @@
                 if (toElev === null) throw new Error('Sem dados de elevação nesta área');
                 
                 let minE = toElev, maxE = toElev;
+                elevData = []; // Limpa dados antigos do gráfico
+                const alt = parseFloat(document.getElementById('slider-alt').value);
+
                 waypoints.forEach(wp => {
                     const ev = elevTS(wp.lat, wp.lng, Z);
                     wp.ez = (ev === null ? 0 : ev - toElev);
+                    
+                    // Alimenta o gráfico
+                    const dist = turf.distance(turf.point([takeoffPoint.lng, takeoffPoint.lat]), turf.point([wp.lng, wp.lat]));
+                    elevData.push({ dist: dist, terrain: wp.ez, drone: wp.ez + alt });
+
                     if (ev !== null) {
                         minE = Math.min(minE, ev);
                         maxE = Math.max(maxE, ev);
@@ -716,6 +755,7 @@
                 if (token === elevationGenToken) {
                     stat.innerText = `Terreno OK (Δelevação: ${(maxE - minE).toFixed(0)}m)`;
                     stat.style.color = 'var(--accent-green)';
+                    drawElevationProfile();
                 }
                 
             } catch (err) {
@@ -730,6 +770,146 @@
             }
         }
 
+        // =========================================
+        // DESENHO DO GRÁFICO DE ELEVAÇÃO
+        // =========================================
+        function drawElevationProfile() {
+            if(!elevData.length) return;
+            
+            document.getElementById('elev-profile-panel').classList.add('show');
+            const mapElement = document.getElementById('map');
+            mapElement.style.height = 'calc(100% - 180px)'; // Encolhe o mapa
+
+            const canvas = document.getElementById('elev-canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Ajusta resolução para telas Retina/Mobile
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            ctx.scale(dpr, dpr);
+
+            const w = rect.width;
+            const h = rect.height;
+            const padX = 30, padY = 20;
+
+            ctx.clearRect(0, 0, w, h);
+
+            // Encontra os limites (min e max) para escalar o gráfico
+            let minY = Infinity, maxY = -Infinity;
+            elevData.forEach(d => {
+                minY = Math.min(minY, d.terrain);
+                maxY = Math.max(maxY, d.drone);
+            });
+            const rangeY = (maxY - minY) || 10; // Evita divisão por zero
+            
+            // Funções de mapeamento (coordenada -> pixel)
+            const getX = (dist) => padX + (dist / elevData[elevData.length-1].dist) * (w - padX*2);
+            const getY = (val) => h - padY - ((val - minY) / rangeY) * (h - padY*2);
+
+            // Desenha Linhas de Grade
+            ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+            ctx.lineWidth = 1;
+            for(let i=0; i<=4; i++) {
+                const y = padY + (i/4)*(h-padY*2);
+                ctx.beginPath(); ctx.moveTo(padX, y); ctx.lineTo(w-padX, y); ctx.stroke();
+            }
+
+            // Desenha Área do Terreno (preenchimento)
+            ctx.beginPath();
+            ctx.moveTo(getX(elevData[0].dist), getY(minY - 5)); // Fundo
+            elevData.forEach(d => ctx.lineTo(getX(d.dist), getY(d.terrain)));
+            ctx.lineTo(getX(elevData[elevData.length-1].dist), getY(minY - 5));
+            ctx.fillStyle = 'rgba(210, 194, 172, 0.1)'; // Dourado transparente
+            ctx.fill();
+
+            // Desenha Linha do Terreno
+            ctx.beginPath();
+            elevData.forEach((d, i) => {
+                if(i===0) ctx.moveTo(getX(d.dist), getY(d.terrain));
+                else ctx.lineTo(getX(d.dist), getY(d.terrain));
+            });
+            ctx.strokeStyle = '#22c55e'; // Verde (Terreno)
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Desenha Linha do Drone
+            ctx.beginPath();
+            elevData.forEach((d, i) => {
+                if(i===0) ctx.moveTo(getX(d.dist), getY(d.drone));
+                else ctx.lineTo(getX(d.dist), getY(d.drone));
+            });
+            ctx.strokeStyle = '#d2c2ac'; // Dourado (Drone)
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+
+        function closeElevationPanel() {
+            document.getElementById('elev-profile-panel').classList.remove('show');
+            document.getElementById('map').style.height = '100%';
+        }
+
+        // =========================================
+        // EXPORTAR TXT UTM
+        // =========================================
+        function latLngToUTM(lat, lng) {
+            const a = 6378137, f = 1/298.257223563;
+            const e2 = f * (2 - f), k0 = 0.9996;
+            const zone = Math.floor((lng + 180) / 6) + 1;
+            const lng0 = (zone - 1) * 6 - 180 + 3;
+            
+            const rad = Math.PI / 180;
+            const latRad = lat * rad;
+            const lngRad = (lng - lng0) * rad;
+            
+            const N = a / Math.sqrt(1 - e2 * Math.pow(Math.sin(latRad), 2));
+            const T = Math.pow(Math.tan(latRad), 2);
+            const C = e2 / (1 - e2) * Math.pow(Math.cos(latRad), 2);
+            const A = Math.cos(latRad) * lngRad;
+            const M = a * ((1 - e2/4 - 3*e2*e2/64 - 5*e2*e2*e2/256) * latRad - 
+                           (3*e2/8 + 3*e2*e2/32 + 45*e2*e2*e2/1024) * Math.sin(2*latRad) + 
+                           (15*e2*e2/256 + 45*e2*e2*e2/1024) * Math.sin(4*latRad) - 
+                           (35*e2*e2*e2/3072) * Math.sin(6*latRad));
+            
+            let easting = k0 * N * (A + (1-T+C)*Math.pow(A,3)/6 + (5-18*T+T*T+72*C-58*e2)*Math.pow(A,5)/120) + 500000;
+            let northing = k0 * (M + N * Math.tan(latRad) * (A*A/2 + (5-T+9*C+4*C*C)*Math.pow(A,4)/24 + (61-58*T+T*T+600*C-330*e2)*Math.pow(A,6)/720));
+            
+            if (lat < 0) northing += 10000000;
+            
+            return { easting: easting.toFixed(3), northing: northing.toFixed(3), zone, hemisphere: lat >= 0 ? 'N' : 'S' };
+        }
+
+        function exportUTM() {
+            if(waypoints.length === 0) return alert("Desenhe a área primeiro!");
+            
+            const alt = parseFloat(document.getElementById('slider-alt').value);
+            const utm = latLngToUTM(waypoints[0].lat, waypoints[0].lng);
+            
+            let txt = `ZAVA MAPPING - Pontos UTM\n`;
+            txt += `Projeção: WGS 84 / UTM Zona ${utm.zone}${utm.hemisphere}\n`;
+            txt += `Altitude Base: ${alt} m\n`;
+            txt += `Total de Pontos: ${waypoints.length}\n`;
+            txt += `--------------------------------------------------\n`;
+            txt += `Ponto;Este(X);Norte(Y);Altitude(AGL)\n`;
+
+            waypoints.forEach((wp, i) => {
+                const u = latLngToUTM(wp.lat, wp.lng);
+                const h = alt + (wp.ez || 0);
+                txt += `${i+1};${u.easting};${u.northing};${h.toFixed(2)}\n`;
+            });
+
+            const blob = new Blob([txt], { type: "text/plain;charset=utf-8" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); 
+            a.href = url; 
+            a.download = `Zava_UTM_${Date.now()}.txt`;
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        }
+
+        // =========================================
+        // OUTRAS FUNÇÕES
+        // =========================================
         function onDroneChange() {
             const val = document.getElementById('drone-selector').value;
             const btn = document.getElementById('btn-custom-drone');
@@ -896,6 +1076,7 @@
             if(currentPolygonLayer) {
                 generateGrid(speed, hoverOn, angle);
                 if (terrainMode && takeoffPoint) calcTerrainElevations();
+                else closeElevationPanel();
             }
         }
 
@@ -961,6 +1142,7 @@
             drawnItems.clearLayers(); routeLayer.clearLayers(); currentPolygonLayer = null; waypoints = []; 
             if (takeoffMarker) { map.removeLayer(takeoffMarker); takeoffMarker = null; }
             takeoffPoint = null;
+            closeElevationPanel();
             updateAll(); 
         }
         
@@ -980,7 +1162,30 @@
             const pitch = -document.getElementById('slider-cam-angle').value;
             const hoverCapture = document.getElementById('chk-hover').checked;
             
-            let templateKml = `<?xml version="1.0" encoding="UTF-8"?>
+            // LÓGICA DE DIVISÃO AUTOMÁTICA (>195 WAYPOINTS)
+            const MAX_WP = 195;
+            const chunks = [];
+            
+            if (waypoints.length <= MAX_WP) {
+                chunks.push(waypoints);
+            } else {
+                let i = 0;
+                while (i < waypoints.length) {
+                    let end = Math.min(i + MAX_WP, waypoints.length);
+                    chunks.push(waypoints.slice(i, end));
+                    if (end >= waypoints.length) break;
+                    i = end - 1; // Repete o último ponto no próximo voo para emendar
+                }
+            }
+
+            const JSZipObj = new JSZip();
+            
+            // Itera sobre os blocos (se for 1 só, gera o arquivo normal. Se for mais, gera múltiplos)
+            for (let c = 0; c < chunks.length; c++) {
+                const chunk = chunks[c];
+                const suffix = chunks.length > 1 ? `_Voo${c+1}de${chunks.length}` : '';
+
+                let templateKml = `<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2" xmlns:wpml="http://www.dji.com/wpmz/1.0.6">
   <Document>
     <wpml:author>Zava Mapping</wpml:author>
@@ -1009,21 +1214,21 @@
   </Document>
 </kml>`;
 
-            let placemarks = '';
-            waypoints.forEach((wp, index) => {
-                let actionGroup = '';
-                if(index === 0) {
-                    actionGroup = `<wpml:actionGroup><wpml:actionGroupId>${index}</wpml:actionGroupId><wpml:actionGroupStartIndex>${index}</wpml:actionGroupStartIndex><wpml:actionGroupEndIndex>${index}</wpml:actionGroupEndIndex><wpml:actionGroupMode>sequence</wpml:actionGroupMode><wpml:actionTrigger><wpml:actionTriggerType>reachPoint</wpml:actionTriggerType></wpml:actionTrigger><wpml:action><wpml:actionId>0</wpml:actionId><wpml:actionActuatorFunc>gimbalRotate</wpml:actionActuatorFunc><wpml:actionActuatorFuncParam><wpml:gimbalHeadingYawBase>aircraft</wpml:gimbalHeadingYawBase><wpml:gimbalRotateMode>absoluteAngle</wpml:gimbalRotateMode><wpml:gimbalPitchRotateEnable>1</wpml:gimbalPitchRotateEnable><wpml:gimbalPitchRotateAngle>${pitch}</wpml:gimbalPitchRotateAngle><wpml:gimbalRollRotateEnable>0</wpml:gimbalRollRotateEnable><wpml:gimbalRollRotateAngle>0</wpml:gimbalRollRotateAngle><wpml:gimbalYawRotateEnable>0</wpml:gimbalYawRotateEnable><wpml:gimbalYawRotateAngle>0</wpml:gimbalYawRotateAngle><wpml:payloadPositionIndex>0</wpml:payloadPositionIndex></wpml:actionActuatorFuncParam></wpml:action>${hoverCapture ? '<wpml:action><wpml:actionId>1</wpml:actionId><wpml:actionActuatorFunc>hover</wpml:actionActuatorFunc><wpml:actionActuatorFuncParam><wpml:hoverTime>2.5</wpml:hoverTime></wpml:actionActuatorFuncParam></wpml:action><wpml:action><wpml:actionId>2</wpml:actionId><wpml:actionActuatorFunc>takePhoto</wpml:actionActuatorFunc><wpml:actionActuatorFuncParam><wpml:payloadPositionIndex>0</wpml:payloadPositionIndex></wpml:actionActuatorFuncParam></wpml:action>' : '<wpml:action><wpml:actionId>1</wpml:actionId><wpml:actionActuatorFunc>takePhoto</wpml:actionActuatorFunc><wpml:actionActuatorFuncParam><wpml:payloadPositionIndex>0</wpml:payloadPositionIndex></wpml:actionActuatorFuncParam></wpml:action>'}</wpml:actionGroup>`;
-                } else {
-                    actionGroup = `<wpml:actionGroup><wpml:actionGroupId>${index}</wpml:actionGroupId><wpml:actionGroupStartIndex>${index}</wpml:actionGroupStartIndex><wpml:actionGroupEndIndex>${index}</wpml:actionGroupEndIndex><wpml:actionGroupMode>sequence</wpml:actionGroupMode><wpml:actionTrigger><wpml:actionTriggerType>reachPoint</wpml:actionTriggerType></wpml:actionTrigger>${hoverCapture ? '<wpml:action><wpml:actionId>0</wpml:actionId><wpml:actionActuatorFunc>hover</wpml:actionActuatorFunc><wpml:actionActuatorFuncParam><wpml:hoverTime>1.5</wpml:hoverTime></wpml:actionActuatorFuncParam></wpml:action><wpml:action><wpml:actionId>1</wpml:actionId><wpml:actionActuatorFunc>takePhoto</wpml:actionActuatorFunc><wpml:actionActuatorFuncParam><wpml:payloadPositionIndex>0</wpml:payloadPositionIndex></wpml:actionActuatorFuncParam></wpml:action>' : '<wpml:action><wpml:actionId>0</wpml:actionId><wpml:actionActuatorFunc>takePhoto</wpml:actionActuatorFunc><wpml:actionActuatorFuncParam><wpml:payloadPositionIndex>0</wpml:payloadPositionIndex></wpml:actionActuatorFuncParam></wpml:action>'}</wpml:actionGroup>`;
-                }
-                
-                const h = parseFloat(height) + (wp.ez || 0);
-                
-                placemarks += `<Placemark><wpml:index>${index}</wpml:index><Point><coordinates>${wp.lng.toFixed(8)},${wp.lat.toFixed(8)},0</coordinates></Point><wpml:executeHeight>${h.toFixed(2)}</wpml:executeHeight><wpml:waypointSpeed>${speed}</wpml:waypointSpeed><wpml:waypointHeadingParam><wpml:waypointHeadingMode>followWayline</wpml:waypointHeadingMode><wpml:waypointHeadingAngle>0</wpml:waypointHeadingAngle></wpml:waypointHeadingParam><wpml:waypointTurnParam><wpml:waypointTurnMode>coordinateTurn</wpml:waypointTurnMode><wpml:waypointTurnDampingDist>0.2</wpml:waypointTurnDampingDist></wpml:waypointTurnParam>${actionGroup}</Placemark>`;
-            });
+                let placemarks = '';
+                chunk.forEach((wp, index) => {
+                    let actionGroup = '';
+                    if(index === 0) {
+                        actionGroup = `<wpml:actionGroup><wpml:actionGroupId>${index}</wpml:actionGroupId><wpml:actionGroupStartIndex>${index}</wpml:actionGroupStartIndex><wpml:actionGroupEndIndex>${index}</wpml:actionGroupEndIndex><wpml:actionGroupMode>sequence</wpml:actionGroupMode><wpml:actionTrigger><wpml:actionTriggerType>reachPoint</wpml:actionTriggerType></wpml:actionTrigger><wpml:action><wpml:actionId>0</wpml:actionId><wpml:actionActuatorFunc>gimbalRotate</wpml:actionActuatorFunc><wpml:actionActuatorFuncParam><wpml:gimbalHeadingYawBase>aircraft</wpml:gimbalHeadingYawBase><wpml:gimbalRotateMode>absoluteAngle</wpml:gimbalRotateMode><wpml:gimbalPitchRotateEnable>1</wpml:gimbalPitchRotateEnable><wpml:gimbalPitchRotateAngle>${pitch}</wpml:gimbalPitchRotateAngle><wpml:gimbalRollRotateEnable>0</wpml:gimbalRollRotateEnable><wpml:gimbalRollRotateAngle>0</wpml:gimbalRollRotateAngle><wpml:gimbalYawRotateEnable>0</wpml:gimbalYawRotateEnable><wpml:gimbalYawRotateAngle>0</wpml:gimbalYawRotateAngle><wpml:payloadPositionIndex>0</wpml:payloadPositionIndex></wpml:actionActuatorFuncParam></wpml:action>${hoverCapture ? '<wpml:action><wpml:actionId>1</wpml:actionId><wpml:actionActuatorFunc>hover</wpml:actionActuatorFunc><wpml:actionActuatorFuncParam><wpml:hoverTime>2.5</wpml:hoverTime></wpml:actionActuatorFuncParam></wpml:action><wpml:action><wpml:actionId>2</wpml:actionId><wpml:actionActuatorFunc>takePhoto</wpml:actionActuatorFunc><wpml:actionActuatorFuncParam><wpml:payloadPositionIndex>0</wpml:payloadPositionIndex></wpml:actionActuatorFuncParam></wpml:action>' : '<wpml:action><wpml:actionId>1</wpml:actionId><wpml:actionActuatorFunc>takePhoto</wpml:actionActuatorFunc><wpml:actionActuatorFuncParam><wpml:payloadPositionIndex>0</wpml:payloadPositionIndex></wpml:actionActuatorFuncParam></wpml:action>'}</wpml:actionGroup>`;
+                    } else {
+                        actionGroup = `<wpml:actionGroup><wpml:actionGroupId>${index}</wpml:actionGroupId><wpml:actionGroupStartIndex>${index}</wpml:actionGroupStartIndex><wpml:actionGroupEndIndex>${index}</wpml:actionGroupEndIndex><wpml:actionGroupMode>sequence</wpml:actionGroupMode><wpml:actionTrigger><wpml:actionTriggerType>reachPoint</wpml:actionTriggerType></wpml:actionTrigger>${hoverCapture ? '<wpml:action><wpml:actionId>0</wpml:actionId><wpml:actionActuatorFunc>hover</wpml:actionActuatorFunc><wpml:actionActuatorFuncParam><wpml:hoverTime>1.5</wpml:hoverTime></wpml:actionActuatorFuncParam></wpml:action><wpml:action><wpml:actionId>1</wpml:actionId><wpml:actionActuatorFunc>takePhoto</wpml:actionActuatorFunc><wpml:actionActuatorFuncParam><wpml:payloadPositionIndex>0</wpml:payloadPositionIndex></wpml:actionActuatorFuncParam></wpml:action>' : '<wpml:action><wpml:actionId>0</wpml:actionId><wpml:actionActuatorFunc>takePhoto</wpml:actionActuatorFunc><wpml:actionActuatorFuncParam><wpml:payloadPositionIndex>0</wpml:payloadPositionIndex></wpml:actionActuatorFuncParam></wpml:action>'}</wpml:actionGroup>`;
+                    }
+                    
+                    const h = parseFloat(height) + (wp.ez || 0);
+                    
+                    placemarks += `<Placemark><wpml:index>${index}</wpml:index><Point><coordinates>${wp.lng.toFixed(8)},${wp.lat.toFixed(8)},0</coordinates></Point><wpml:executeHeight>${h.toFixed(2)}</wpml:executeHeight><wpml:waypointSpeed>${speed}</wpml:waypointSpeed><wpml:waypointHeadingParam><wpml:waypointHeadingMode>followWayline</wpml:waypointHeadingMode><wpml:waypointHeadingAngle>0</wpml:waypointHeadingAngle></wpml:waypointHeadingParam><wpml:waypointTurnParam><wpml:waypointTurnMode>coordinateTurn</wpml:waypointTurnMode><wpml:waypointTurnDampingDist>0.2</wpml:waypointTurnDampingDist></wpml:waypointTurnParam>${actionGroup}</Placemark>`;
+                });
 
-            let waylinesWpml = `<?xml version="1.0" encoding="UTF-8"?>
+                let waylinesWpml = `<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2" xmlns:wpml="http://www.dji.com/wpmz/1.0.6">
   <Document>
     <wpml:missionConfig><wpml:flyToWaylineMode>safely</wpml:flyToWaylineMode><wpml:finishAction>goHome</wpml:finishAction><wpml:exitOnRCLost>executeLostAction</wpml:exitOnRCLost><wpml:executeRCLostAction>goBack</wpml:executeRCLostAction><wpml:takeOffSecurityHeight>${height}</wpml:takeOffSecurityHeight><wpml:globalTransitionalSpeed>${tspd}</wpml:globalTransitionalSpeed><wpml:droneInfo><wpml:droneEnumValue>343</wpml:droneEnumValue><wpml:droneSubEnumValue>0</wpml:droneSubEnumValue></wpml:droneInfo><wpml:payloadInfo><wpml:payloadEnumValue>0</wpml:payloadEnumValue><wpml:payloadSubEnumValue>0</wpml:payloadSubEnumValue><wpml:payloadPositionIndex>0</wpml:payloadPositionIndex></wpml:payloadInfo></wpml:missionConfig>
@@ -1031,14 +1236,26 @@
   </Document>
 </kml>`;
 
-            const JSZipObj = new JSZip();
-            JSZipObj.file("template.kml", templateKml);
-            JSZipObj.file("waylines.wpml", waylinesWpml);
+                JSZipObj.file(`template${suffix}.kml`, templateKml);
+                JSZipObj.file(`waylines${suffix}.wpml`, waylinesWpml);
+            }
+
             const blob = await JSZipObj.generateAsync({type:"blob"});
             const url = URL.createObjectURL(blob);
-            const a = document.createElement('a'); a.href = url; a.download = `ZavaMapping_WP_${Date.now()}.kmz`;
+            const a = document.createElement('a'); a.href = url; a.download = `ZavaMapping_WP_${Date.now()}${chunks.length > 1 ? '_MultiplosVoos' : ''}.kmz`;
             document.body.appendChild(a); a.click(); document.body.removeChild(a);
+
+            if (chunks.length > 1) {
+                alert(`Sua missão foi dividida automaticamente em ${chunks.length} arquivos de voo porque ultrapassou o limite de 195 waypoints do DJI Fly. Os arquivos foram zipados juntos no download.`);
+            }
         }
+
+        // Inicialização
+        window.addEventListener('resize', () => {
+            if(document.getElementById('elev-profile-panel').classList.contains('show')) {
+                drawElevationProfile();
+            }
+        });
 
         setTimeout(updateAll, 500);
     </script>
